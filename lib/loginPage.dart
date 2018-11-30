@@ -34,17 +34,19 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     if(_currentUser == null) {
       return new SignInScreen(
-        title: 'Firebase UI',
+        title: 'Welcome to ToDo',
         header: new Padding(
           padding: const EdgeInsets.symmetric(vertical: 32.0),
           child: new Padding(
             padding: const EdgeInsets.all(16.0),
-            child: new Text("Login")
+            child: new Text("Sign up or sign in using your preferred method")
           )
         ),
         providers: [
-          ProvidersTypes.google
-        ]
+          ProvidersTypes.google,
+          ProvidersTypes.email
+        ],
+        color: Theme.of(context).backgroundColor,
       );
     }
     else {
