@@ -1,60 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-
-const TASKS_COLLECTION = 'users';
-const TODO_TASKS_KEY = 'toDoTasks';
-const COMPLETED_TASKS_KEY = 'completedTasks';
-
+import 'package:to_do/firestoreProxy.dart';
 
 class HomePage extends StatefulWidget {
   final FirebaseUser user;
-
   HomePage({this.user});
 
   @override
-  _HomePageState createState() => _HomePageState(user: this.user);
+  _HomePageState createState() => _HomePageState(user: user);
 }
 
-
 class _HomePageState extends State<HomePage> {
-  final FirebaseUser user;
-  final Firestore db = Firestore.instance;
+  FirestoreProxy db;
   TextStyle titleStyle = TextStyle(fontSize: 30.0);
-  List<String> completedItems = new List<String>();
-  List<String> toDoItems = new List<String>();
 
-  _HomePageState({this.user}) {
-    db.settings(timestampsInSnapshotsEnabled: true, persistenceEnabled: true);
-    db.collection(TASKS_COLLECTION).document(this.user.uid).get().then((documentSnapshot) {
-      if(documentSnapshot.exists) {
-        setState(() {
-          toDoItems = List<String>.from(documentSnapshot.data[TODO_TASKS_KEY]);
-          completedItems = List<String>.from(documentSnapshot.data[COMPLETED_TASKS_KEY]);
-        });
-      }
-    });
-  }
-
-  void _logout() {
-    FirebaseAuth.instance.signOut();
+  _HomePageState({FirebaseUser user}) {
+    db = FirestoreProxy(user: user, destination: this);
   }
 
   Widget getCompletedPage() {
-    Iterable<ListTile> tiles = completedItems.map((text) {
+    Iterable<ListTile> tiles = db.getCompletedTasks().map((text) {
       return ListTile(
         title: Text(text, style: TextStyle(fontSize: 22)),
         leading: IconButton(
           icon: Icon(Icons.check_box),
           onPressed: () {
             setState(() {
-              completedItems.remove(text);
-              toDoItems.add(text);
-              db.collection(TASKS_COLLECTION).document(this.user.uid).setData({
-                TODO_TASKS_KEY: toDoItems,
-                COMPLETED_TASKS_KEY: completedItems,
-              });
+              db.markAsUpcoming(text);
             });
           }
         ),
@@ -62,11 +34,7 @@ class _HomePageState extends State<HomePage> {
           icon: Icon(Icons.delete),
           onPressed: () {
             setState(() {
-              completedItems.remove(text);
-              db.collection(TASKS_COLLECTION).document(this.user.uid).setData({
-                TODO_TASKS_KEY: toDoItems,
-                COMPLETED_TASKS_KEY: completedItems,
-              });
+              db.removeCompletedTask(text);
             });
           }
         ),
@@ -110,11 +78,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           onSubmitted: (newTaskText) {
                             setState(() {
-                              toDoItems.add(newTaskText);
-                              db.collection(TASKS_COLLECTION).document(this.user.uid).setData({
-                                TODO_TASKS_KEY: toDoItems,
-                                COMPLETED_TASKS_KEY: completedItems,
-                              });
+                              db.addUpcomingTask(newTaskText);
                               Navigator.pop(context);
                             });
                           },
@@ -133,19 +97,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
   Widget getUpcomingPage() {
-    Iterable<ListTile> tiles = toDoItems.map((text) {
+    Iterable<ListTile> tiles = db.getUpcomingTasks().map((text) {
       return ListTile(
         title: Text(text, style: TextStyle(fontSize: 22)),
         leading: IconButton(
           icon: Icon(Icons.check_box_outline_blank),
           onPressed: () {
             setState(() {
-              completedItems.add(text);
-              toDoItems.remove(text);
-              db.collection(TASKS_COLLECTION).document(this.user.uid).setData({
-                TODO_TASKS_KEY: toDoItems,
-                COMPLETED_TASKS_KEY: completedItems,
-              });
+              db.markAsCompleted(text);
             });
           }
         ),
