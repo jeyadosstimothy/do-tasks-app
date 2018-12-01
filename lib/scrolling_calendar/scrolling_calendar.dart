@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'calendar_month.dart';
 
 class ScrollingCalendar extends StatelessWidget {
-  static const double listItemHeight = 320.0;
+  static const int listItemHeight = 270;
   static const int baseIndex = 10000;
   final DateTime dateAtBaseIndex;
   final int firstDayOfWeek;
@@ -12,9 +12,7 @@ class ScrollingCalendar extends StatelessWidget {
   final DateTappedCallbackType onDateTapped;
   final Iterable<Color> Function(DateTime) colorMarkers;
 
-  static DateTime _getCurrentDate() =>
-      ((DateTime time) => new DateTime.utc(time.year, time.month, time.day))(
-          DateTime.now().toUtc());
+  static DateTime _getCurrentDate() => DateTime.now();
 
   ScrollingCalendar(
       {this.selectedDate,
@@ -24,11 +22,11 @@ class ScrollingCalendar extends StatelessWidget {
       : colorMarkers = colorMarkers ?? ((_) => <Color>[]),
         firstDayOfWeek = firstDayOfWeek ?? DateTime.monday,
         onDateTapped = (onDateTapped ?? (_) {}),
-        dateAtBaseIndex = (selectedDate ?? _getCurrentDate());
+        dateAtBaseIndex = _getCurrentDate();
 
   void jumpToMonth(DateTime date) {
-    scrollController
-        .jumpTo(_getScrollOffsetForIndex(_getIndexForMonthDate(date)));
+    pageController
+        .jumpToPage(_getScrollOffsetForIndex(_getIndexForMonthDate(date)));
   }
 
   static int _getMonthDifference(DateTime base, DateTime other) =>
@@ -38,7 +36,7 @@ class ScrollingCalendar extends StatelessWidget {
   int _getIndexForMonthDate(DateTime date) =>
       baseIndex + _getMonthDifference(dateAtBaseIndex, date);
 
-  static double _getScrollOffsetForIndex(int index) => index * listItemHeight;
+  static int _getScrollOffsetForIndex(int index) => index * listItemHeight;
 
   static DateTime _getSiblingMonthDate(DateTime current, bool next) {
     DateTime result = current;
@@ -61,16 +59,16 @@ class ScrollingCalendar extends StatelessWidget {
     return resultDate;
   }
 
-  final ScrollController scrollController = PageController(
-      initialPage: baseIndex);//_getScrollOffsetForIndex(baseIndex));
+  final PageController pageController = PageController(
+      initialPage: baseIndex// _getScrollOffsetForIndex(baseIndex)
+  );
 
   @override
   Widget build(BuildContext context) => Container(
-    height: listItemHeight,
+    height: listItemHeight*1.0,
     child: PageView.builder(
       //itemExtent: listItemHeight,
       itemBuilder: (BuildContext context, int index) => Container(
-          padding: EdgeInsets.only(left: 24.0, right: 24.0),
           child: CalendarMonth(
             colorMarkers: colorMarkers,
             startDate: _getMonthDateByIndex(index),
@@ -78,7 +76,7 @@ class ScrollingCalendar extends StatelessWidget {
             onDateTapped: onDateTapped,
             firstDayOfWeek: firstDayOfWeek,
           )),
-      controller: scrollController,
+      controller: pageController,
     )
   );
 }

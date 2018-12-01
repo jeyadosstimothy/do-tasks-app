@@ -51,10 +51,10 @@ class CalendarMonth extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: []
         ..add(new Container(
-            padding: const EdgeInsets.only(bottom: 12.0),
+            padding: const EdgeInsets.only(bottom: 5.0),
             child: new Text(
               formatTitle(startDate),
-              style: Theme.of(context).textTheme.headline,
+              style: Theme.of(context).textTheme.title,
             )))
         ..add(generateWeekDays(context, days: daysOfMonth))
         ..addAll(generateWeeks(days: daysOfMonth, startDate: startDate)));

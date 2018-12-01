@@ -41,8 +41,8 @@ class CalendarDay extends StatelessWidget {
                         date.day.toString(),
                         textAlign: TextAlign.center,
                         style: selected
-                            ? Theme.of(context).accentTextTheme.body2
-                            : Theme.of(context).textTheme.body2,
+                            ? Theme.of(context).accentTextTheme.body1
+                            : Theme.of(context).textTheme.body1,
                       ),
                       new Row(
                           mainAxisAlignment: MainAxisAlignment.center,

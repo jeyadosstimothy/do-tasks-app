@@ -15,7 +15,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   FirestoreProxy db;
-  TextStyle titleStyle = TextStyle(fontSize: 30.0);
   DateTime currentDate = DateTime.now();
 
   _HomePageState({FirebaseUser user}) {
@@ -25,7 +24,7 @@ class _HomePageState extends State<HomePage> {
   Widget getCompletedPage() {
     Iterable<ListTile> tiles = db.getCompletedTasks().map((task) {
       return ListTile(
-        title: Text(task[TASK_LABEL], style: TextStyle(fontSize: 22)),
+        title: Text(task[TASK_LABEL], style: Theme.of(context).textTheme.subhead),
         leading: IconButton(
           icon: Icon(Icons.check_box),
           onPressed: () {
@@ -46,7 +45,7 @@ class _HomePageState extends State<HomePage> {
     });
     List<Widget> divided = ListTile.divideTiles(context: context, tiles: tiles).toList();
     divided.insert(0, ListTile(
-      title: Text('Completed Tasks', style: TextStyle(fontSize: 30)),
+      title: Text('Completed Tasks', style: Theme.of(context).textTheme.title),
     ));
     return Scaffold(
       body: ListView(
@@ -68,33 +67,28 @@ class _HomePageState extends State<HomePage> {
               children: <Widget>[
                 Text(
                   'Add New Task' + (date != null ? ' on ' + dateToString(date, DATE_LABEL_FORMAT) : ''),
-                  style: TextStyle(fontSize: 20)
+                  style: Theme.of(context).textTheme.title
                 ),
-                Row(
-                  children: <Widget> [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.only(left:5.0, right:10.0),
-                        child: TextField(
-                          autofocus: true,
-                          style: TextStyle(
-                            fontSize: 20,
-                          ),
-                          onSubmitted: (newTaskText) {
-                            setState(() {
-                              db.addUpcomingTask(newTaskText, date: date);
-                              Navigator.pop(context);
-                            });
-                          },
-                        )
-                      ),
-                    ),
-                  ]
-                )
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.only(left: 5.0, right:5.0),
+                    child: TextField(
+                      autofocus: true,
+                      style: Theme.of(context).textTheme.subhead,
+                      onSubmitted: (newTaskText) {
+                        setState(() {
+                          db.addUpcomingTask(newTaskText, date: date);
+                          Navigator.pop(context);
+                        });
+                      },
+                    )
+                  ),
+                ),
+
               ],
             ),
-            padding: const EdgeInsets.all(20.0),
-            height: 120,
+            padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 14),
+            height: 100,
           )
         );
       }
@@ -104,7 +98,7 @@ class _HomePageState extends State<HomePage> {
   Widget getUpcomingPage() {
     Iterable<ListTile> tiles = db.getUpcomingTasks().map((task) {
       return ListTile(
-        title: Text(task[TASK_LABEL], style: TextStyle(fontSize: 22)),
+        title: Text(task[TASK_LABEL], style: Theme.of(context).textTheme.subhead),
         leading: IconButton(
           icon: Icon(Icons.check_box_outline_blank),
           onPressed: () {
@@ -117,7 +111,7 @@ class _HomePageState extends State<HomePage> {
     });
     List<Widget> divided = ListTile.divideTiles(context: context, tiles: tiles).toList();
     divided.insert(0, ListTile(
-      title: Text('Upcoming Tasks', style: TextStyle(fontSize: 30)),
+      title: Text('Upcoming Tasks', style: Theme.of(context).textTheme.title),
     ));
     return Scaffold(
       body: ListView(
@@ -137,59 +131,54 @@ class _HomePageState extends State<HomePage> {
       return <Color> [];
   }
 
-  Widget getDateUpcomingPage() {
+  List<Widget> getDateUpcomingTasks() {
     Iterable<ListTile> tiles = db.getUpcomingTasks(date: currentDate).map((task) {
       return ListTile(
-        title: Text(task[TASK_LABEL], style: TextStyle(fontSize: 22)),
+        title: Text(task[TASK_LABEL], style: Theme.of(context).textTheme.subhead),
         leading: IconButton(
-            icon: Icon(Icons.check_box_outline_blank),
-            onPressed: () {
-              setState(() {
-                db.markAsCompleted(task);
-              });
-            }
+          icon: Icon(Icons.check_box_outline_blank),
+          onPressed: () {
+            setState(() {
+              db.markAsCompleted(task);
+            });
+          }
         ),
       );
     });
-    List<Widget> divided = ListTile.divideTiles(context: context, tiles: tiles).toList();
-    divided.insert(0, ListTile(
-      title: Text('Tasks on ' + dateToString(currentDate, DATE_LABEL_FORMAT), style: TextStyle(fontSize: 30)),
-    ));
-    return Scaffold(
-      body: ListView(
-        children: divided,
-      ),
-      floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            showNewTaskBottomSheet(date: currentDate);
-          },
-          child: Icon(Icons.add)
-      ),
-    );
+    return ListTile.divideTiles(context: context, tiles: tiles).toList();
   }
 
   Widget getCalendarPage() {
     return new Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(300),
-        child: AppBar(
-          flexibleSpace: Container(
-            child: new ScrollingCalendar(
-              firstDayOfWeek: DateTime.monday,
-              onDateTapped: (DateTime date) {
-                setState(() {
-                  currentDate = date;
-                });
-              },
-              selectedDate: currentDate,
-              colorMarkers: getDateColors,
+      body: CustomScrollView(
+        slivers: <Widget> [
+          SliverAppBar(
+            forceElevated: true,
+            title: Text('Tasks on ' +  dateToString(currentDate, DATE_LABEL_FORMAT), style: Theme.of(context).textTheme.title),
+            bottom: new PreferredSize(
+              preferredSize: Size.fromHeight(270),
+              child: new ScrollingCalendar(
+                firstDayOfWeek: DateTime.monday,
+                onDateTapped: (DateTime date) {
+                  setState(() {
+                    currentDate = date;
+                  });
+                },
+                selectedDate: currentDate,
+                colorMarkers: getDateColors,
+              )
             ),
-            padding: EdgeInsets.only(top: 25),
-          )
-        )
+          ),
+          SliverList(delegate: SliverChildListDelegate(getDateUpcomingTasks()))
+        ]
       ),
-      body: getDateUpcomingPage()
-      );
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showNewTaskBottomSheet(date: currentDate);
+        },
+        child: Icon(Icons.add)
+      ),
+    );
   }
   @override
   Widget build(BuildContext context) {
