@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:collection';
 
 const TASKS_COLLECTION = 'users';
 const TODO_TASKS_KEY = 'toDoTasks';
@@ -17,13 +18,13 @@ class FirestoreProxy {
   final FirebaseUser user;
   final State destination;
   final Firestore db = Firestore.instance;
-  List<Map<String, String>> completedTasks = new List<Map<String, String>>();
-  List<Map<String, String>> upcomingTasks = new List<Map<String, String>>();
+  DoubleLinkedQueue<Map<String, String>> completedTasks = new DoubleLinkedQueue<Map<String, String>>();
+  DoubleLinkedQueue<Map<String, String>> upcomingTasks = new DoubleLinkedQueue<Map<String, String>>();
   Map<String, List<Map<String, String>>> upcomingTasksMap = new Map<String, List<Map<String, String>>>();
 
-  List<Map<String, String>> convertToList(var iterable) {
+  DoubleLinkedQueue<Map<String, String>> convertToQueue(var iterable) {
     var x = List<Map<dynamic, dynamic>>.from(iterable);
-    return List<Map<String, String>>.from(x.map((mp) => Map<String, String>.from(mp)));
+    return DoubleLinkedQueue<Map<String, String>>.from(x.map((mp) => Map<String, String>.from(mp)));
   }
 
   FirestoreProxy({this.user, this.destination}) {
@@ -31,8 +32,8 @@ class FirestoreProxy {
     db.collection(TASKS_COLLECTION).document(this.user.uid).snapshots().listen((documentSnapshot) {
       if(documentSnapshot.exists) {
         this.destination.setState(() {
-          this.upcomingTasks = convertToList(documentSnapshot.data[TODO_TASKS_KEY]);
-          this.completedTasks = convertToList(documentSnapshot.data[COMPLETED_TASKS_KEY]);
+          this.upcomingTasks = convertToQueue(documentSnapshot.data[TODO_TASKS_KEY]);
+          this.completedTasks = convertToQueue(documentSnapshot.data[COMPLETED_TASKS_KEY]);
           upcomingTasksMap.clear();
           for(var item in upcomingTasks) {
             if(upcomingTasksMap.containsKey(item[DATE_LABEL]))
@@ -47,8 +48,8 @@ class FirestoreProxy {
 
   void _updateTasks() {
     db.collection(TASKS_COLLECTION).document(this.user.uid).setData({
-      TODO_TASKS_KEY: this.upcomingTasks,
-      COMPLETED_TASKS_KEY: this.completedTasks,
+      TODO_TASKS_KEY: List<Map<String, String>>.from(this.upcomingTasks),
+      COMPLETED_TASKS_KEY: List<Map<String, String>>.from(this.completedTasks),
     });
   }
 
@@ -56,11 +57,11 @@ class FirestoreProxy {
     return upcomingTasksMap.containsKey(dateToString(date, DATE_NUM_FORMAT));
   }
 
-  List<Map<String, String>> getCompletedTasks() {
+  Iterable<Map<String, String>> getCompletedTasks() {
     return completedTasks;
   }
 
-  List<Map<String, String>> getUpcomingTasks({date}) {
+  Iterable<Map<String, String>> getUpcomingTasks({date}) {
     if (date == null)
       return upcomingTasks;
     else {
@@ -73,13 +74,13 @@ class FirestoreProxy {
 
   void markAsCompleted(Map<String, String> task) {
     this.upcomingTasks.remove(task);
-    this.completedTasks.add(task);
+    this.completedTasks.addFirst(task);
     _updateTasks();
   }
 
   void markAsUpcoming(Map<String, String> task) {
     this.completedTasks.remove(task);
-    this.upcomingTasks.add(task);
+    this.upcomingTasks.addFirst(task);
     _updateTasks();
   }
 
@@ -90,7 +91,7 @@ class FirestoreProxy {
       var dateLabel = dateToString(date, DATE_NUM_FORMAT);
       mp[DATE_LABEL] = dateLabel;
     }
-    this.upcomingTasks.add(mp);
+    this.upcomingTasks.addFirst(mp);
     _updateTasks();
   }
 
