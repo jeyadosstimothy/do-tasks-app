@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_firebase_ui/flutter_firebase_ui.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:to_do/homePage.dart';
+import 'package:to_do/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   final destinationPage;

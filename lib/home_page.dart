@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:to_do/firestoreProxy.dart';
+import 'package:to_do/firestore_proxy.dart';
 import 'package:to_do/scrolling_calendar/scrolling_calendar.dart';
+import 'package:to_do/list_header_view.dart';
+import 'package:to_do/db_schema.dart';
 
 const DATE_LABEL_FORMAT = 'MMM d, y';
 
@@ -22,34 +24,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget getCompletedPage() {
-    Iterable<ListTile> tiles = db.getCompletedTasks().map((task) {
-      return ListTile(
-        title: Text(task[TASK_LABEL], style: Theme.of(context).textTheme.subhead),
-        leading: IconButton(
-          icon: Icon(Icons.check_box),
-          onPressed: () {
-            setState(() {
-              db.markAsUpcoming(task);
-            });
-          }
-        ),
-        trailing: IconButton(
-          icon: Icon(Icons.delete),
-          onPressed: () {
-            setState(() {
-              db.removeCompletedTask(task);
-            });
-          }
-        ),
-      );
-    });
-    List<Widget> divided = ListTile.divideTiles(context: context, tiles: tiles).toList();
-    divided.insert(0, ListTile(
-      title: Text('Completed Tasks', style: Theme.of(context).textTheme.title),
-    ));
     return Scaffold(
-      body: ListView(
-        children: divided,
+      body: ListHeaderView(
+        tasks: db.getCompletedTasks(),
+        title: 'Completed Tasks',
+        leading: Icons.check_box,
+        onPressLeading: (task) => setState((){
+          db.markAsUpcoming(task);
+        }),
+        trailing: Icons.delete,
+        onPressTrailing: (task) => setState((){
+          db.removeCompletedTask(task);
+        }),
+        divided: true,
       )
     );
   }
@@ -96,26 +83,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget getUpcomingPage() {
-    Iterable<ListTile> tiles = db.getUpcomingTasks().map((task) {
-      return ListTile(
-        title: Text(task[TASK_LABEL], style: Theme.of(context).textTheme.subhead),
-        leading: IconButton(
-          icon: Icon(Icons.check_box_outline_blank),
-          onPressed: () {
-            setState(() {
-              db.markAsCompleted(task);
-            });
-          }
-        ),
-      );
-    });
-    List<Widget> divided = ListTile.divideTiles(context: context, tiles: tiles).toList();
-    divided.insert(0, ListTile(
-      title: Text('Upcoming Tasks', style: Theme.of(context).textTheme.title),
-    ));
     return Scaffold(
-      body: ListView(
-        children: divided,
+      body: ListHeaderView(
+        tasks: db.getUpcomingTasks(),
+        title: 'Upcoming Tasks',
+        leading: Icons.check_box_outline_blank,
+        onPressLeading: (task) => setState(() {
+          db.markAsCompleted(task);
+        }),
+        divided: true,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: showNewTaskBottomSheet,
@@ -132,9 +108,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Widget> getDateUpcomingTasks() {
-    Iterable<ListTile> tiles = db.getUpcomingTasks(date: currentDate).map((task) {
-      return ListTile(
-        title: Text(task[TASK_LABEL], style: Theme.of(context).textTheme.subhead),
+    Iterable<Widget> tiles = db.getUpcomingTasks(date: currentDate).map(
+      (Task task) => ListTile(
+        title: Text(task.getTaskName(), style: Theme.of(context).textTheme.subhead),
         leading: IconButton(
           icon: Icon(Icons.check_box_outline_blank),
           onPressed: () {
@@ -143,8 +119,8 @@ class _HomePageState extends State<HomePage> {
             });
           }
         ),
-      );
-    });
+      )
+    );
     return ListTile.divideTiles(context: context, tiles: tiles).toList();
   }
 
