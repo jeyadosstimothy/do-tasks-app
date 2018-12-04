@@ -24,32 +24,4 @@ class FirestoreProxy {
    Future<void> updateTasks(Map<String, List<Map<String, String>>> json) {
     return db.collection(collectionName).document(userId).setData(json);
   }
-
-  /*
-  bool hasTasks(DateTime date) {
-    return upcomingTasksMap.containsKey(dateToString(date, DATE_NUM_FORMAT));
-  }
-
-  TaskList getUpcomingTasks({date}) {
-    if (date == null)
-      return upcomingTasks;
-    else {
-      if (upcomingTasksMap.containsKey(dateToString(date, DATE_NUM_FORMAT)))
-        return upcomingTasksMap[dateToString(date, DATE_NUM_FORMAT)];
-      else
-        return TaskList();
-    }
-  }
-
-
-  void swapUpcomingTasks({@required int oldIndex, @required int newIndex}) {
-    if (oldIndex < newIndex) {
-      // removing the item at oldIndex will shorten the list by 1.
-      newIndex -= 1;
-    }
-    final element = upcomingTasks.removeAt(oldIndex);
-    upcomingTasks.insert(newIndex, element);
-    _updateTasks();
-  }
-  */
 }

@@ -44,6 +44,11 @@ class Task {
       taskName.hashCode ^
       dateTime.hashCode;
 
+  @override
+  String toString() {
+    return 'Task{taskName: $taskName, dateTime: $dateTime}';
+  }
+
 }
 
 
@@ -107,4 +112,11 @@ class TaskList{
     }
     return taskMap;
   }
+
+  @override
+  String toString() {
+    return tasks.toString();
+  }
+
+
 }
