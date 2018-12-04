@@ -1,52 +1,33 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:to_do/db_schema.dart';
-
-const TASKS_COLLECTION = 'users';
-const TODO_TASKS_KEY = 'toDoTasks';
-const COMPLETED_TASKS_KEY = 'completedTasks';
-const DATE_NUM_FORMAT = 'yyyy-MM-dd';
-
-String dateToString(DateTime date, String format) => DateFormat(format).format(date);
-
 
 class FirestoreProxy {
-  final FirebaseUser user;
-  final State destination;
   final Firestore db = Firestore.instance;
-  TaskList completedTasks = new TaskList();
-  TaskList upcomingTasks = new TaskList();
-  Map<String, TaskList> upcomingTasksMap = new Map<String, TaskList>();
+  final String userId, collectionName;
 
-    FirestoreProxy({this.user, this.destination}) {
+  FirestoreProxy(this.userId, this.collectionName) {
     db.settings(timestampsInSnapshotsEnabled: true, persistenceEnabled: true);
-    db.collection(TASKS_COLLECTION).document(this.user.uid).snapshots().listen((documentSnapshot) {
+    print('Created FirestoreProxy($userId, $collectionName)');
+  }
+
+  Future<DocumentSnapshot> loadTasks() {
+    /*db.collection(TASKS_COLLECTION).document(this.firebaseUser.uid).snapshots().listen((documentSnapshot) {
       if(documentSnapshot.exists) {
-        this.destination.setState(() {
-          this.upcomingTasks = TaskList.fromJson(documentSnapshot.data[TODO_TASKS_KEY]);
-          this.completedTasks = TaskList.fromJson(documentSnapshot.data[COMPLETED_TASKS_KEY]);
-          this.upcomingTasksMap = this.upcomingTasks.getDateTaskMap();
-
-        });
+        this.upcomingTasks = TaskList.fromJson(documentSnapshot.data[TODO_TASKS_KEY]);
+        this.completedTasks = TaskList.fromJson(documentSnapshot.data[COMPLETED_TASKS_KEY]);
+        this.upcomingTasksMap = this.upcomingTasks.getDateTaskMap();
       }
-    });
+    });*/
+    print('In FirestoreProxy.loadTasks()');
+    return db.collection(collectionName).document(userId).get();
   }
 
-  void _updateTasks() {
-    db.collection(TASKS_COLLECTION).document(this.user.uid).setData({
-      TODO_TASKS_KEY: this.upcomingTasks.toJson(),
-      COMPLETED_TASKS_KEY: this.completedTasks.toJson(),
-    });
+   Future<void> updateTasks(Map<String, List<Map<String, String>>> json) {
+    return db.collection(collectionName).document(userId).setData(json);
   }
 
+  /*
   bool hasTasks(DateTime date) {
     return upcomingTasksMap.containsKey(dateToString(date, DATE_NUM_FORMAT));
-  }
-
-  TaskList getCompletedTasks() {
-    return completedTasks;
   }
 
   TaskList getUpcomingTasks({date}) {
@@ -60,32 +41,6 @@ class FirestoreProxy {
     }
   }
 
-  void markAsCompleted(Task task) {
-    this.upcomingTasks.remove(task);
-    this.completedTasks.insert(0, task);
-    _updateTasks();
-  }
-
-  void markAsUpcoming(Task task) {
-    this.completedTasks.remove(task);
-    this.upcomingTasks.insert(0, task);
-    _updateTasks();
-  }
-
-  void addUpcomingTask(String text, {DateTime date}) {
-    var dateLabel;
-    if(date != null) {
-      dateLabel = dateToString(date, DATE_NUM_FORMAT);
-    }
-    Task task = Task(taskName: text, dateTime: dateLabel);
-    this.upcomingTasks.insert(0, task);
-    _updateTasks();
-  }
-
-  void removeCompletedTask(Task task) {
-    this.completedTasks.remove(task);
-    _updateTasks();
-  }
 
   void swapUpcomingTasks({@required int oldIndex, @required int newIndex}) {
     if (oldIndex < newIndex) {
@@ -96,4 +51,5 @@ class FirestoreProxy {
     upcomingTasks.insert(newIndex, element);
     _updateTasks();
   }
+  */
 }

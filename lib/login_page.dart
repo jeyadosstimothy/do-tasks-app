@@ -50,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
     else {
-      return new HomePage(user: _currentUser);
+      return new HomePage(firebaseUser: _currentUser);
     }
   }
 

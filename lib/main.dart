@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
     ]);
     return MaterialApp(
       title: 'To Do',
-      theme: ThemeData.dark(),
+      theme: ThemeData.light(),
       home: LoginPage(),
     );
   }

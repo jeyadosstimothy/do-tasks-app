@@ -1,4 +1,3 @@
-import 'package:meta/meta.dart';
 import 'package:intl/intl.dart';
 
 const TODO_TASKS_KEY = 'toDoTasks';
@@ -11,8 +10,7 @@ class Task {
   final String taskName;
   final DateTime dateTime;
 
-  Task({@required this.taskName, String dateTime}):
-    this.dateTime = ((dateTime == null) ? null : DateTime.parse(dateTime));
+  Task(this.taskName, [this.dateTime]);
 
   Task.fromJson(Map<dynamic, dynamic> json):
     taskName=json[TASK_LABEL].toString(),
@@ -32,27 +30,64 @@ class Task {
     assert(hasDateTime());
     return DateFormat(format).format(dateTime);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Task &&
+              runtimeType == other.runtimeType &&
+              taskName == other.taskName &&
+              dateTime == other.dateTime;
+
+  @override
+  int get hashCode =>
+      taskName.hashCode ^
+      dateTime.hashCode;
+
 }
 
 
 class TaskList{
   final List<Task> tasks;
+  int length=0;
 
-  TaskList({tasks}): this.tasks = tasks ?? <Task>[];
+  TaskList({tasks}): this.tasks = (tasks ?? <Task>[]) {
+    length = this.tasks.length;
+  }
 
   TaskList.fromJson(List<dynamic> json):
-    this.tasks = List<Task>.from(json.map((taskMap) => Task.fromJson(taskMap)));
+    this.tasks = List<Task>.from(json.map((taskMap) => Task.fromJson(taskMap))) {
+    length = this.tasks.length;
+  }
 
   List<Map<String, String>> toJson() =>
-    List<Map<String, String>>.from(tasks.map((task)=>task.toJson()));
+    List<Map<String, String>>.from(tasks.map((Task task) => task.toJson()));
 
-  void add(Task task) => tasks.add(task);
+  void clear() {
+    tasks.clear();
+    length = 0;
+  }
 
-  void remove(Task task) => tasks.remove(task);
+  void add(Task task) {
+    tasks.add(task);
+    length = this.tasks.length;
+  }
 
-  void insert(int index, Task task) => tasks.insert(index, task);
+  void remove(Task task) {
+    tasks.remove(task);
+    length = this.tasks.length;
+  }
 
-  Task removeAt(int index) => tasks.removeAt(index);
+  void insert(int index, Task task){
+    tasks.insert(index, task);
+    length = this.tasks.length;
+  }
+
+  Task removeAt(int index) {
+    Task task = tasks.removeAt(index);
+    length = this.tasks.length;
+    return task;
+  }
 
   Task operator[](int index) {
     return tasks[index];
