@@ -56,6 +56,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
         return false;
       if(upcomingTasks.length == 0)
       {
+        print('Adding new task to empty upcoming list');
         setState(() {
           upcomingTasks.insert(0, task);
         });
@@ -327,6 +328,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
             new MainScaffold(
               title: new Text('Completed Tasks', style: Theme.of(context).textTheme.title),
               body: new AnimatedList(
+                key: ValueKey<bool>(completedTasks.length==0),
                 initialItemCount: completedTasks.length,
                 itemBuilder: (BuildContext context, int index, Animation animation) {
                   print('Building completedListTile $index, length: ${completedTasks.length}');
@@ -344,7 +346,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
                       trailing: IconButton(icon: Icon(Icons.delete), onPressed: () {
                         Task task = removeCompletedTask(index);
                         Scaffold.of(context).showSnackBar(SnackBar(
-                          content: Text(task.getTaskName() + ' was deleted'),
+                          content: Text('"${task.getTaskName()}" was deleted'),
                           action: SnackBarAction(
                             label: 'Undo',
                             onPressed: () => addCompletedTask(task)
@@ -363,6 +365,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
             new MainScaffold(
               title: new Text('Upcoming Tasks', style: Theme.of(context).textTheme.title),
               body: new AnimatedList(
+                key: ValueKey<bool>(upcomingTasks.length==0),
                 initialItemCount: upcomingTasks.length,
                 itemBuilder: (BuildContext context, int index, Animation animation) {
                   print('Building upcomingListTile $index, length: ${upcomingTasks.length}');

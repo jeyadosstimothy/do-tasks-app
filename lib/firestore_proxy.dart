@@ -12,6 +12,10 @@ class FirestoreProxy {
     db.settings(timestampsInSnapshotsEnabled: true, persistenceEnabled: true);
   }
 
+  void createTaskDocument(Map<String, dynamic> json) {
+    db.collection(collectionName).document(userId).setData(json);
+  }
+
   Future<DocumentSnapshot> loadTasks() {
     print('Firebase: Fetching tasks');
     return db.collection(collectionName).document(userId).get();

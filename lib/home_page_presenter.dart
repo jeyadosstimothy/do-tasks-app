@@ -22,11 +22,28 @@ class HomePagePresenter {
 
   void loadTasks() {
     firestore.loadTasks().then((documentSnapshot) {
-        upcomingTasks = TaskList.fromJson(documentSnapshot.data[TODO_TASKS_KEY]).reversed();
-        completedTasks = TaskList.fromJson(documentSnapshot.data[COMPLETED_TASKS_KEY]).reversed();
-        print('Received upcomingTasks length: ${upcomingTasks.length}');
-        print('Received completedTasks length: ${completedTasks.length}');
-        view.onLoadTasksComplete(upcomingTasks, completedTasks);
+        if(documentSnapshot.exists) {
+          upcomingTasks = TaskList.fromJson(documentSnapshot.data[TODO_TASKS_KEY]).reversed();
+          completedTasks = TaskList.fromJson(documentSnapshot.data[COMPLETED_TASKS_KEY]).reversed();
+          print('Received upcomingTasks length: ${upcomingTasks.length}');
+          print('Received completedTasks length: ${completedTasks.length}');
+          view.onLoadTasksComplete(upcomingTasks, completedTasks);
+        }
+        else {
+          upcomingTasks = TaskList(tasks: <Task>[
+            Task('Welcome to Do'),
+            Task('Swipe towards the right to view your completed tasks'),
+            Task('Swipe towards the left to view tasks based on due date'),
+            Task('Dates are marked with a red dot if there are tasks due on that date', DateTime.now()),
+            Task('You can add new tasks if there are no other tasks with the exact same name and date')
+          ]);
+          completedTasks = TaskList(tasks: <Task>[]);
+          firestore.createTaskDocument(<String, dynamic>{
+            COMPLETED_TASKS_KEY: completedTasks.reversed().toJson(),
+            TODO_TASKS_KEY: upcomingTasks.reversed().toJson()
+          });
+          view.onLoadTasksComplete(upcomingTasks, completedTasks);
+        }
       },
       onError: view.onLoadTasksError
     );

@@ -39,12 +39,11 @@ class _LoginPageState extends State<LoginPage> {
           padding: const EdgeInsets.symmetric(vertical: 32.0),
           child: new Padding(
             padding: const EdgeInsets.all(16.0),
-            child: new Text("Select your preferred method to sign in", style: Theme.of(context).textTheme.subhead,)
+            child: new Text("By signing in using your google account, your tasks will be synced with the cloud. To continue, press the button below", style: Theme.of(context).textTheme.subhead,)
           )
         ),
         providers: [
-          ProvidersTypes.google,
-          ProvidersTypes.email
+          ProvidersTypes.google
         ],
         color: Theme.of(context).canvasColor,
       );

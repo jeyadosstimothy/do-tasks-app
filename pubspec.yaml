@@ -1,5 +1,5 @@
 name: to_do
-description: To-do lists, minimalistic
+description: To-do lists, minimalistic.
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -7,7 +7,7 @@ description: To-do lists, minimalistic
 # Both the version and the builder number may be overridden in flutter
 # build by specifying --build-name and --build-number, respectively.
 # Read more about versioning at semver.org.
-version: 1.1.1+1
+version: 1.0.0
 
 environment:
   sdk: ">=2.0.0-dev.68.0 <3.0.0"
@@ -25,9 +25,6 @@ dependencies:
   cloud_firestore: ^0.8.2+3
   firebase_auth: ^0.5.20
   flutter_firebase_ui: ^0.0.12
-
-  # Dependency for calendar
-  # scrolling_calendar: ^0.2.11
 
   # Dependency for Internationalization, date formats
   intl: ^0.15.7
