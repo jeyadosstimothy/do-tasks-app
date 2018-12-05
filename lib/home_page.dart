@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:to_do/db_schema.dart';
 import 'package:to_do/home_page_presenter.dart';
-import 'package:intl/intl.dart' as intl;
 import 'package:to_do/scrolling_calendar/scrolling_calendar.dart';
-
-const DATE_LABEL_FORMAT = 'MMM d, y';
-
-String dateToString(DateTime date, String format) => intl.DateFormat(format).format(date);
+import 'package:to_do/main_scaffold.dart';
 
 class HomePage extends StatefulWidget {
   final FirebaseUser firebaseUser;
@@ -24,7 +20,6 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
   TaskList upcomingTasks, completedTasks;
   Map<String, TaskList> upcomingTasksMap;
   HomePagePresenter presenter;
-  Duration listItemDuration = Duration(milliseconds: 400);
   AnimatedListState upcomingListState, completedListState, datedUpcomingListState;
   String titleText = 'Upcoming Tasks';
 
@@ -68,13 +63,13 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
       }
       else {
         upcomingTasks.insert(0, task);
-        upcomingListState.insertItem(0, duration: listItemDuration);
+        upcomingListState.insertItem(0, duration: LISTTILE_DURATION);
       }
     }
     else {
       if (upcomingTasksMap.containsKey(task.getDateTime())) {
         upcomingTasksMap[task.getDateTime()].insert(0, task);
-        datedUpcomingListState.insertItem(0, duration: listItemDuration);
+        datedUpcomingListState.insertItem(0, duration: LISTTILE_DURATION);
       }
       else {
         setState(() {
@@ -96,7 +91,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
     }
     else {
       completedTasks.insert(0, task);
-      completedListState.insertItem(0, duration: listItemDuration);
+      completedListState.insertItem(0, duration: LISTTILE_DURATION);
     }
     presenter.updateTasks();
   }
@@ -122,7 +117,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
           ),
         );
       },
-      duration: listItemDuration
+      duration: LISTTILE_DURATION
     );
     setState(() {
       upcomingTasks.insert(0, task);
@@ -165,7 +160,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
           ),
         );
       },
-      duration: listItemDuration,
+      duration: LISTTILE_DURATION,
     );
     setState(() {
       upcomingTasks.remove(task);
@@ -198,7 +193,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
           ),
         );
       },
-      duration: listItemDuration,
+      duration: LISTTILE_DURATION,
     );
     setState(() {
       if(task.hasDateTime()) {
@@ -237,7 +232,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
           ),
         );
       },
-      duration: listItemDuration
+      duration: LISTTILE_DURATION
     );
     print('CompletedList.length: ${completedTasks.length}');
     presenter.updateTasks();
@@ -277,41 +272,14 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
     );
   }
 
-  void showNewTaskBottomSheet({date}) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return new AnimatedPadding(
-          padding: MediaQuery.of(context).viewInsets,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.decelerate,
-          child: Container(
-            padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 14),
-            height: 100,
-            child: Column(
-              children: <Widget>[
-                Text(
-                  'Add New Task' + (date != null ? ' due on ' + dateToString(date, DATE_LABEL_FORMAT) : ''),
-                  style: Theme.of(context).textTheme.title
-                ),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.only(left: 5.0, right:5.0),
-                    child: TextField(
-                      autofocus: true,
-                      style: Theme.of(context).textTheme.subhead,
-                      onSubmitted: (newTaskText) {
-                        Navigator.pop(context);
-                        addUpcomingTask(newTaskText, date);
-                      },
-                    )
-                  ),
-                ),
-              ],
-            ),
-          )
-        );
-      }
+  void showNewTaskPage({inputDate}) {
+    String newTaskName = '';
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) {
+        print('In add new task page, newTaskName: $newTaskName, inputDate: $inputDate');
+        return NewTaskScreen(date: inputDate, onComplete: addUpcomingTask);
+      })
     );
   }
 
@@ -330,14 +298,8 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
         new PageView(
           controller: new PageController(initialPage: 1),
           children: <Widget>[
-            new Scaffold(
-              appBar: new AppBar(
-                backgroundColor: Theme.of(context).canvasColor,
-                elevation: 0,
-                title: new Center(
-                  child: new Text('Completed Tasks', style: Theme.of(context).textTheme.title),
-                )
-              ),
+            new MainScaffold(
+              title: new Text('Completed Tasks', style: Theme.of(context).textTheme.title),
               body: new AnimatedList(
                 initialItemCount: completedTasks.length,
                 itemBuilder: (BuildContext context, int index, Animation animation) {
@@ -373,14 +335,8 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
                 child: const Icon(Icons.clear)
               ),
             ),
-            new Scaffold(
-              appBar: new AppBar(
-                backgroundColor: Theme.of(context).canvasColor,
-                elevation: 0,
-                title: new Center(
-                  child: new Text('Upcoming Tasks', style: Theme.of(context).textTheme.title),
-                )
-              ),
+            new MainScaffold(
+              title: new Text('Upcoming Tasks', style: Theme.of(context).textTheme.title),
               body: new AnimatedList(
                 initialItemCount: upcomingTasks.length,
                 itemBuilder: (BuildContext context, int index, Animation animation) {
@@ -398,16 +354,13 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
                 }
               ),
               floatingActionButton: new FloatingActionButton(
-                onPressed: showNewTaskBottomSheet,
+                onPressed: showNewTaskPage,
                 child: const Icon(Icons.add)
               ),
             ),
-            new Scaffold(
-              appBar: new AppBar(
-                elevation: 0,
-                backgroundColor: Theme.of(context).canvasColor,
-                title: new AnimatedSwitcher(
-                  duration: listItemDuration,
+            new MainScaffold(
+              title: new AnimatedSwitcher(
+                  duration: FADE_DURATION,
                   child: new Center(
                     key: ValueKey<DateTime>(currentDate),
                     child: new Text(
@@ -415,25 +368,24 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
                       style: Theme.of(context).textTheme.title
                     )
                   )
-                ),
-                bottom: new PreferredSize(
-                  preferredSize: Size.fromHeight(270),
-                  child: new ScrollingCalendar(
-                    firstDayOfWeek: DateTime.monday,
-                    onDateTapped: (DateTime date) {
-                      setState(() {
-                        currentDate = date;
-                        print('currentDate set to $currentDate');
-                        print('${dateToString(currentDate, DATE_NUM_FORMAT)}');
-                      });
-                    },
-                    selectedDate: currentDate,
-                    colorMarkers: getDateColors,
-                  )
-                ),
+              ),
+              bottom: new PreferredSize(
+                preferredSize: Size.fromHeight(270),
+                child: new ScrollingCalendar(
+                  firstDayOfWeek: DateTime.monday,
+                  onDateTapped: (DateTime date) {
+                    setState(() {
+                      currentDate = date;
+                      print('currentDate set to $currentDate');
+                      print('${dateToString(currentDate, DATE_NUM_FORMAT)}');
+                    });
+                  },
+                  selectedDate: currentDate,
+                  colorMarkers: getDateColors,
+                )
               ),
               body: new AnimatedSwitcher(
-                duration: listItemDuration,
+                duration: FADE_DURATION,
                 child: new AnimatedList(
                   key: ValueKey<String>('${currentDate.toString()} ${upcomingTasksMap.containsKey(dateToString(currentDate, DATE_NUM_FORMAT))}'),
                   initialItemCount: upcomingTasksMap.containsKey(dateToString(currentDate, DATE_NUM_FORMAT)) ?
@@ -455,7 +407,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
                 )
               ),
               floatingActionButton: new FloatingActionButton(
-                onPressed: () => showNewTaskBottomSheet(date: currentDate),
+                onPressed: () => showNewTaskPage(inputDate: currentDate),
                 child: const Icon(Icons.add)
               ),
             )
