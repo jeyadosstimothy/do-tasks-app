@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:to_do/db_schema.dart';
+import 'package:to_do/task_model.dart';
 import 'package:to_do/home_page_presenter.dart';
 import 'package:to_do/scrolling_calendar/scrolling_calendar.dart';
 import 'package:to_do/main_scaffold.dart';
@@ -41,8 +41,6 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
       this.completedTasks = completedTasks;
       this.upcomingTasksMap = upcomingTasks.getDateTaskMap();
       tasksReady = true;
-      print('HomePageState.upcomingTasks.length: ${this.upcomingTasks.length}');
-      print('$upcomingTasksMap');
     });
   }
 
@@ -51,10 +49,11 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
     print('Error in loading tasks');
   }
 
-  void addUpcomingTask(String taskName, DateTime dateTime) {
-    print('in addUpcomingTask $taskName, $dateTime');
+  bool addUpcomingTask(String taskName, DateTime dateTime) {
     Task task = new Task(taskName, dateTime);
     if(dateTime == null) {
+      if(upcomingTasks.contains(task))
+        return false;
       if(upcomingTasks.length == 0)
       {
         setState(() {
@@ -68,6 +67,8 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
     }
     else {
       if (upcomingTasksMap.containsKey(task.getDateTime())) {
+        if(upcomingTasksMap[task.getDateTime()].contains(task))
+          return false;
         upcomingTasksMap[task.getDateTime()].insert(0, task);
         datedUpcomingListState.insertItem(0, duration: LISTTILE_DURATION);
       }
@@ -80,24 +81,27 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
         upcomingTasks.insert(0, task);
       });
     }
-    presenter.updateTasks();
+    presenter.updateTasks(task: task, completed: false, removal: false);
+    return true;
   }
 
-  void addCompletedTask(Task task) {
+  bool addCompletedTask(Task task) {
     if(completedTasks.length == 0) {
       setState(() {
         completedTasks.insert(0, task);
       });
     }
     else {
+      if(completedTasks.contains(task))
+        return false;
       completedTasks.insert(0, task);
       completedListState.insertItem(0, duration: LISTTILE_DURATION);
     }
-    presenter.updateTasks();
+    presenter.updateTasks(task: task, completed: true, removal: false);
+    return true;
   }
 
   void markAsUpcoming(int index) {
-    print('Marking $index as upcoming');
     Task task = completedTasks.removeAt(index);
     completedListState.removeItem(
       index,
@@ -121,18 +125,18 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
     );
     setState(() {
       upcomingTasks.insert(0, task);
-      if(upcomingTasksMap.containsKey(task.getDateTime()))
-        upcomingTasksMap[task.getDateTime()].insert(0, task);
-      else
-        upcomingTasksMap[task.getDateTime()] = TaskList(tasks: <Task>[task]);
+      if(task.hasDateTime()) {
+        if (upcomingTasksMap.containsKey(task.getDateTime()))
+          upcomingTasksMap[task.getDateTime()].insert(0, task);
+        else
+          upcomingTasksMap[task.getDateTime()] = TaskList(tasks: <Task>[task]);
+      }
     });
     //upcomingListState.insertItem(0, duration: listItemDuration);
-    print('completedTasks.length: ${completedTasks.length}');
-    presenter.updateTasks();
+    presenter.updateTasks(task: task, completed: false);
   }
 
   void markDatedTaskAsComplete(int index) {
-    print('Marking $index as completed');
     Task task;
     setState(() {
       task = upcomingTasksMap[dateToString(currentDate, DATE_NUM_FORMAT)].removeAt(index);
@@ -140,7 +144,6 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
         upcomingTasksMap.remove(task.getDateTime());
       }
     });
-    print('Placeholder task: ${task.getTaskName()}');
     datedUpcomingListState.removeItem(
       index,
           (BuildContext context, Animation<double> animation) {
@@ -167,13 +170,11 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
       completedTasks.insert(0, task);
     });
     //completedListState.insertItem(0, duration: listItemDuration);
-    presenter.updateTasks();
+    presenter.updateTasks(task: task, completed: true);
   }
 
   void markAsComplete(int index) {
-    print('Marking $index as completed');
     Task task = upcomingTasks.removeAt(index);
-    print('Placeholder task: ${task.getTaskName()}');
     upcomingListState.removeItem(
       index,
       (BuildContext context, Animation<double> animation) {
@@ -205,11 +206,41 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
       completedTasks.insert(0, task);
     });
     //completedListState.insertItem(0, duration: listItemDuration);
-    presenter.updateTasks();
+    presenter.updateTasks(task: task, completed: true);
+  }
+
+  void removeAllCompletedTasks() {
+    while(completedTasks.length > 0) {
+      int index = completedTasks.length-1;
+      Task task;
+      setState(() {
+        task = completedTasks.removeAt(index);
+      });
+      completedListState.removeItem(
+          index,
+          (BuildContext context, Animation<double> animation) {
+            Text title = Text(task.getTaskName(), style: Theme.of(context).textTheme.subhead);
+            return FadeTransition(
+              opacity: CurvedAnimation(parent: animation, curve: Interval(0.0, 1.0)),
+              child: SizeTransition(
+                  sizeFactor: CurvedAnimation(parent: animation, curve: Curves.easeIn),
+                  axisAlignment: 0.0,
+                  child: ListTile(
+                    title: title,
+                    key: ValueKey<Widget>(title),
+                    leading: IconButton(icon: Icon(Icons.check_box), onPressed: null,),
+                    trailing: IconButton(icon: Icon(Icons.delete), onPressed: null,),
+                  )
+              ),
+            );
+          },
+          duration: LISTTILE_DURATION
+      );
+    }
+    presenter.removeAllCompletedTasks();
   }
 
   Task removeCompletedTask(int index) {
-    print('Removing $index from completed, length: ${completedTasks.length}');
     Task task;
     setState(() {
       task = completedTasks.removeAt(index);
@@ -234,8 +265,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
       },
       duration: LISTTILE_DURATION
     );
-    print('CompletedList.length: ${completedTasks.length}');
-    presenter.updateTasks();
+    presenter.updateTasks(task: task, completed: true, removal: true);
     return task;
   }
 
@@ -259,9 +289,7 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
                   child: const Text('Yes'),
                   onPressed: () {
                     Navigator.pop(context);
-                    while(completedTasks.length > 0){
-                      removeCompletedTask(completedTasks.length-1);
-                    }
+                    removeAllCompletedTasks();
                   },
                 ),
               ],
@@ -273,11 +301,9 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
   }
 
   void showNewTaskPage({inputDate}) {
-    String newTaskName = '';
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) {
-        print('In add new task page, newTaskName: $newTaskName, inputDate: $inputDate');
         return NewTaskScreen(date: inputDate, onComplete: addUpcomingTask);
       })
     );
@@ -321,9 +347,8 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
                           content: Text(task.getTaskName() + ' was deleted'),
                           action: SnackBarAction(
                             label: 'Undo',
-                            onPressed: () {
-                              addCompletedTask(task);
-                            }),
+                            onPressed: () => addCompletedTask(task)
+                          ),
                         ));
                       }),
                     )
@@ -376,8 +401,6 @@ class _HomePageState extends State<HomePage> implements HomePageViewContract{
                   onDateTapped: (DateTime date) {
                     setState(() {
                       currentDate = date;
-                      print('currentDate set to $currentDate');
-                      print('${dateToString(currentDate, DATE_NUM_FORMAT)}');
                     });
                   },
                   selectedDate: currentDate,

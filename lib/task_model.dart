@@ -1,7 +1,5 @@
 import 'package:intl/intl.dart';
 
-const TODO_TASKS_KEY = 'toDoTasks';
-const COMPLETED_TASKS_KEY = 'completedTasks';
 const TASK_LABEL = 'task';
 const DATE_LABEL = 'datetime';
 const DATE_NUM_FORMAT = 'yyyy-MM-dd';
@@ -37,7 +35,8 @@ class Task {
           other is Task &&
               runtimeType == other.runtimeType &&
               taskName == other.taskName &&
-              dateTime == other.dateTime;
+              this.hasDateTime() == other.hasDateTime() &&
+              (!this.hasDateTime() || (this.hasDateTime() && (this.getDateTime() == other.getDateTime())));
 
   @override
   int get hashCode =>
@@ -56,7 +55,7 @@ class TaskList{
   final List<Task> tasks;
   int length=0;
 
-  TaskList({tasks}): this.tasks = (tasks ?? <Task>[]) {
+  TaskList({List<Task> tasks}): this.tasks = (tasks ?? <Task>[]) {
     length = this.tasks.length;
   }
 
@@ -94,8 +93,16 @@ class TaskList{
     return task;
   }
 
+  bool contains(Task element) {
+    return tasks.contains(element);
+  }
+
   Task operator[](int index) {
     return tasks[index];
+  }
+
+  TaskList reversed() {
+    return TaskList(tasks: tasks.reversed.toList());
   }
 
   Iterable<T> map<T>(T f(Task element)) => tasks.map(f);

@@ -34,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     if(_currentUser == null) {
       return new SignInScreen(
-        title: 'Welcome to ToDo',
+        title: 'Welcome to Do',
         header: new Padding(
           padding: const EdgeInsets.symmetric(vertical: 32.0),
           child: new Padding(
@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
           ProvidersTypes.google,
           ProvidersTypes.email
         ],
-        color: Theme.of(context).backgroundColor,
+        color: Theme.of(context).canvasColor,
       );
     }
     else {
