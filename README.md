@@ -1,6 +1,6 @@
-# to_do
+# Do
 
-An application for storing to-do lists
+Do is an application developed with Flutter, for keeping track of your to-do lists.
 
 ## Getting Started
 
